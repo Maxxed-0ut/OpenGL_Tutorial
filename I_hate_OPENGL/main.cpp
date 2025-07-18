@@ -2,87 +2,94 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+unsigned int compileShader( unsigned int type, const std::string& source) {
 
-#include "shaderClass.h"
-#include "VAO.h"
-#include "VBO.h"
-#include "EBO.h"
+    unsigned int id = glCreateShader(GL_VERTEX_SHADER);
+	const char* src = source.c_str();
+	glShaderSource(id, 1, &src, nullptr);
+	glCompileShader(id);
+
+    return id;
+}
+
+static int createShader(const std::string& vertexShader, const std::string& fragmentShader) {
+
+	unsigned int program = glCreateProgram();
+	unsigned int vs = compileShader(GL_VERTEX_SHADER, vertexShader);
+    unsigned int fs = compileShader(GL_VERTEX_SHADER, fragmentShader);
 
 
-int main() {
+	glAttachShader(program, vs);
+	glAttachShader(program, fs);
+	glLinkProgram(program);
+	glValidateProgram(program);
 
-	glfwInit();
+	glDeleteShader(vs);
+	glDeleteShader(fs);
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+}
 
-	GLfloat vertices[] =
-	{
-		-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Lower left corner
-		0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Lower right corner
-		0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f, // Upper corner
-		-0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f, // Inner left
-		0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f, // Inner right
-		0.0f, -0.5f * float(sqrt(3)) / 3, 0.0f // Inner down
+
+int main(void)
+{
+    GLFWwindow* window;
+
+    /* Initialize the library */
+    if (!glfwInit())
+        return -1;
+
+
+    /* Create a windowed mode window and its OpenGL context */
+    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+    if (!window)
+    {
+        glfwTerminate();
+        return -1;
+    }
+
+    /* Make the window's context current */
+    glfwMakeContextCurrent(window);
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cerr << "Failed to initialize GLAD" << std::endl;
+        return -1;
+    }
+
+    
+
+	std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
+
+    float positions[6] = {
+        -0.5f, -0.5f,
+         0.5f, -0.5f,
+         0.0f,  0.5f
 	};
 
-	GLuint indices[] =
-	{
-		0, 3, 5, // Lower left triangle
-		3, 2, 4, // Lower right triangle
-		5, 4, 1 // Upper triangle
-	};
+	unsigned int buffer;
+	glGenBuffers(1, &buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, buffer);
+	glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+	glEnableVertexAttribArray(0);
 
 
-	GLFWwindow* window = glfwCreateWindow(800, 800, "Window", NULL, NULL);
-	if (window == NULL) {
-		std::cout << "Failed to create GLFW window" << std::endl;
-		glfwTerminate();
-		return -1;
-	}
-	glfwMakeContextCurrent(window);
+    /* Loop until the user closes the window */
+    while (!glfwWindowShouldClose(window))
+    {
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        /* Render here */
+        glClear(GL_COLOR_BUFFER_BIT);
 
-	gladLoadGL();
-	glViewport(0, 0, 800, 800);
-
-	Shader shaderProgram("vertexShader.vert", "fragmentShader.frag");
-	VAO VAO1;
-	VAO1.Bind();
-
-	VBO VBO1(vertices, sizeof(vertices));
-	
-	EBO EBO1(indices, sizeof(indices));
-
-	
-	VAO1.LinkVBO(VBO1, 0);
-	
-	VAO1.Unbind();
-	VBO1.Unbind();
-	EBO1.Unbind();
-
-
-	
-	while(!glfwWindowShouldClose(window)) {
-
-		glClearColor(0.58f, 0.0f, 0.88f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		shaderProgram.Activate();
-		VAO1.Bind();
 		glDrawArrays(GL_TRIANGLES, 0, 3);
-		glfwSwapBuffers(window);
 
-		glfwPollEvents();
-	}
-	
-	VAO1.Delete();
-	VBO1.Delete();
-	EBO1.Delete();
-	shaderProgram.Delete();
+        /* Swap front and back buffers */
+        glfwSwapBuffers(window);
 
-	glfwDestroyWindow(window);
+        /* Poll for and process events */
+        glfwPollEvents();
+    }
 
-
-	glfwTerminate();
-	return 0;
+    glfwTerminate();
+    return 0;
 }
