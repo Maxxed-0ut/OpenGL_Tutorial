@@ -162,7 +162,7 @@ int main(void)
     
     
     
-    shaderSource source = parseShader(R"("rec\Shaders\Basic.shader)");
+    shaderSource source = parseShader("rec/Shaders/Basic.shader");
     
 	std::cout << "Vertex Shader: " << std::endl << source.vertexSource << std::endl;
     unsigned int shader = createShader(source.vertexSource, source.fragmentSource);
