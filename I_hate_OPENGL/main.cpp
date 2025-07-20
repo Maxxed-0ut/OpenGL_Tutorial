@@ -1,22 +1,96 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <fstream>
+#include <string>
+#include <sstream>
+
+
+
+
+struct shaderSource {
+    std::string vertexSource;
+    std::string fragmentSource;
+};
+
+
+static shaderSource parseShader(const std::string& filepath) {
+
+    enum ShaderType {
+
+        NONE = -1, VERTEX = 0, FRAGMENT = 1
+	};
+
+
+    std::fstream stream(filepath);
+    std::string line;
+    
+    std::stringstream ss[2];
+
+	ShaderType type = ShaderType::NONE;
+
+    while(std::getline(stream, line)) {
+        
+        if (line.find("#shader") != std::string::npos) {
+
+
+            if (line.find("vertex") != std::string::npos) {
+
+				type = ShaderType::VERTEX;
+            }
+            else if (line.find("fragment") != std::string::npos) {
+
+				type = ShaderType::FRAGMENT;
+
+            }
+            
+        }
+        else {
+            if (type != NONE) {
+                ss[(int)type] << line << '\n';
+            }
+        }
+    }
+
+	return { ss[0].str(), ss[1].str() };    
+}
 
 unsigned int compileShader( unsigned int type, const std::string& source) {
 
-    unsigned int id = glCreateShader(GL_VERTEX_SHADER);
+    unsigned int id = glCreateShader(type);
 	const char* src = source.c_str();
 	glShaderSource(id, 1, &src, nullptr);
 	glCompileShader(id);
 
+	int result;
+    glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+
+        if (result == GL_FALSE) {
+            
+            int length;
+            glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+            char* message = (char*)alloca(length * sizeof(char));
+			glGetShaderInfoLog(id, length, &length, message);
+
+			std::cout << "Failed to compile shader!"<< (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << std::endl;
+			std::cout << message << std::endl;
+
+			glDeleteShader(id);
+
+            return 0;
+
+            
+        
+        }
+
     return id;
 }
 
-static int createShader(const std::string& vertexShader, const std::string& fragmentShader) {
+static  unsigned int createShader(const std::string& vertexShader, const std::string& fragmentShader) {
 
 	unsigned int program = glCreateProgram();
 	unsigned int vs = compileShader(GL_VERTEX_SHADER, vertexShader);
-    unsigned int fs = compileShader(GL_VERTEX_SHADER, fragmentShader);
+    unsigned int fs = compileShader(GL_FRAGMENT_SHADER, fragmentShader);
 
 
 	glAttachShader(program, vs);
@@ -27,11 +101,15 @@ static int createShader(const std::string& vertexShader, const std::string& frag
 	glDeleteShader(vs);
 	glDeleteShader(fs);
 
+	return program;
+
 }
 
 
 int main(void)
 {
+
+    
     GLFWwindow* window;
 
     /* Initialize the library */
@@ -64,6 +142,9 @@ int main(void)
          0.5f, -0.5f,
          0.0f,  0.5f
 	};
+    unsigned int VAO;
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
 
 	unsigned int buffer;
 	glGenBuffers(1, &buffer);
@@ -72,6 +153,22 @@ int main(void)
 
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
 	glEnableVertexAttribArray(0);
+
+    
+
+        
+    
+
+    
+    
+    
+    shaderSource source = parseShader(R"("rec\Shaders\Basic.shader)");
+    
+	std::cout << "Vertex Shader: " << std::endl << source.vertexSource << std::endl;
+    unsigned int shader = createShader(source.vertexSource, source.fragmentSource);
+	glUseProgram(shader);
+
+    
 
 
     /* Loop until the user closes the window */
@@ -89,7 +186,7 @@ int main(void)
         /* Poll for and process events */
         glfwPollEvents();
     }
-
+	glDeleteProgram(shader);
     glfwTerminate();
     return 0;
 }
