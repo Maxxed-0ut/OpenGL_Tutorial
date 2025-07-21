@@ -125,8 +125,12 @@ int main(void)
         return -1;
     }
 
+	 
+
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
+
+    glfwSwapInterval(1);
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cerr << "Failed to initialize GLAD" << std::endl;
@@ -137,10 +141,16 @@ int main(void)
 
 	std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
 
-    float positions[6] = {
-        -0.5f, -0.5f,
+    float positions[] = {
+        -0.5f, -0.5f, 
          0.5f, -0.5f,
-         0.0f,  0.5f
+        -0.5f,  0.5f,
+		 0.5f,  0.5f,
+	};
+
+    unsigned int indices[] = {
+        0, 1, 2,
+        1, 3, 2
 	};
     unsigned int VAO;
     glGenVertexArrays(1, &VAO);
@@ -149,27 +159,33 @@ int main(void)
 	unsigned int buffer;
 	glGenBuffers(1, &buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 6 * 2* sizeof(float), positions, GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
 	glEnableVertexAttribArray(0);
 
+	unsigned int IBO;
+    glGenBuffers(1, &IBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,  6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+
     
 
-        
-    
-
     
     
     
-    shaderSource source = parseShader(R"("rec\Shaders\Basic.shader)");
+    shaderSource source = parseShader("rec/Shaders/Basic.shader");
     
-	std::cout << "Vertex Shader: " << std::endl << source.vertexSource << std::endl;
+	
     unsigned int shader = createShader(source.vertexSource, source.fragmentSource);
 	glUseProgram(shader);
 
-    
+	int location = glGetUniformLocation(shader, "u_Color");
+	_ASSERT(location != -1);
+	glUniform4f(location, 0.8f, 0.3f, 0.8f, 1.0f);
 
+    float r = 0.0f;
+    float i = 0.5f;
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -178,8 +194,18 @@ int main(void)
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+        glUniform4f(location, r, 0.3f, 0.8f, 1.0f);
 
+		glDrawElements(GL_TRIANGLES,6, GL_UNSIGNED_INT, nullptr);
+        
+        if (r > 1.0f) {
+            i = -0.05f;
+        }
+        else if (r < 0.0f) {
+			i = 0.05f;
+        }
+
+		r += i;
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
 
