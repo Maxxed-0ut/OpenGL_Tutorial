@@ -116,6 +116,10 @@ int main(void)
     if (!glfwInit())
         return -1;
 
+	glfwInitHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwInitHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwInitHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
 
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
@@ -169,9 +173,7 @@ int main(void)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,  6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
 
-    
-
-    
+	
     
     
     shaderSource source = parseShader("rec/Shaders/Basic.shader");
@@ -184,17 +186,35 @@ int main(void)
 	_ASSERT(location != -1);
 	glUniform4f(location, 0.8f, 0.3f, 0.8f, 1.0f);
 
+	glBindVertexArray(0);
+    glUseProgram(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
     float r = 0.0f;
     float i = 0.5f;
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
+
+        glUseProgram(shader);
+        glUniform4f(location, r, 0.3f, 0.8f, 1.0f);
+
+
+        
+        
+		glBindVertexArray(VAO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+
+
+        
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUniform4f(location, r, 0.3f, 0.8f, 1.0f);
+        
 
 		glDrawElements(GL_TRIANGLES,6, GL_UNSIGNED_INT, nullptr);
         
