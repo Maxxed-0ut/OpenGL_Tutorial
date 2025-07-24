@@ -4,6 +4,9 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include "VBO.h"
+#include "IBO.h"
+
 
 
 
@@ -160,19 +163,14 @@ int main(void)
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
-	unsigned int buffer;
-	glGenBuffers(1, &buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	glBufferData(GL_ARRAY_BUFFER, 6 * 2* sizeof(float), positions, GL_STATIC_DRAW);
+	VertexBuffer vb(positions, 4 * 2 * sizeof(float));
+	
 
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
 	glEnableVertexAttribArray(0);
 
-	unsigned int IBO;
-    glGenBuffers(1, &IBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,  6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
-
+    IndexBuffer ib(indices, 6);
+    
 	
     
     
@@ -205,7 +203,7 @@ int main(void)
         
         
 		glBindVertexArray(VAO);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+        ib.Bind();
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 
